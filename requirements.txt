@@ -2,5 +2,6 @@ backports.ssl-match-hostname==3.4.0.2
 certifi==14.05.14
 gnureadline==6.3.3
 ipython==2.4.1
+redis==2.10.3
 tornado==4.1
 wsgiref==0.1.2
