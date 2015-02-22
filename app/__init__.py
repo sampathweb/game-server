@@ -4,5 +4,5 @@ from handler import TicTacToeWSHandler
 
 
 application = Application([
-    (r'/tic-tac-toe', TicTacToeWSHandler),
+    (r'/tic-tac-toe/([a-zA-Z0-9]+)$', TicTacToeWSHandler),
 ])
