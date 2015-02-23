@@ -1,3 +1,4 @@
 ipython
 tornado
 redis
+tornado-redis

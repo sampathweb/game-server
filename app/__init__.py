@@ -1,7 +1,5 @@
 from tornado.web import Application
-
 from handler import TicTacToeWSHandler, AcitivityHandler
-
 
 application = Application([
     # (r'/tic-tac-toe/([a-zA-Z0-9-_]+)$', TicTacToeWSHandler),
