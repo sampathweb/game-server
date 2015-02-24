@@ -1,5 +1,5 @@
 import json
-from redis_store import redis_db
+from db_conn import redis_db
 
 
 class TicTacToe(object):
