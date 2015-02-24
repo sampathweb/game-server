@@ -5,6 +5,12 @@ from tornado.web import RequestHandler
 from tictactoe import TicTacToe
 
 
+class IndexHandler(RequestHandler):
+
+    def get(self):
+        self.render("index.html")
+
+
 class TicTacToeWSHandler(WebSocketHandler):
 
     def __init__(self, *args, **kwargs):
