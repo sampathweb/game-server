@@ -65,6 +65,7 @@ class TicTacToe(object):
                 # Send message to channel of both players
                 for channel_key in [player_key, player2_key]:
                     redis_db.publish(channel_key, json.dumps(data))
+                redis_db.publish('pubsub-change', json.dumps(data))
                 paired_key = player2_key
                 break
         return paired_key

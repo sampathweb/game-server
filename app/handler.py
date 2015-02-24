@@ -2,11 +2,7 @@ import json
 from tornado.escape import json_decode
 from tornado.websocket import WebSocketHandler
 from tornado.web import RequestHandler
-import tornado.gen
 from tictactoe import TicTacToe
-from client_manager import ClientManager
-import tornadoredis
-from opt import REDIS_SERVER_HOST, REDIS_SERVER_PORT
 
 
 class TicTacToeWSHandler(WebSocketHandler):
@@ -35,20 +31,12 @@ class TicTacToeWSHandler(WebSocketHandler):
     def open(self):
         # Generate a Player's Handle
         self.handle = self.game.new_player()
-        ClientManager.add(self.handle, self)
         self._send_message('connect',
             handle=self.handle,
             text='Connected to Game Server!')
+        self.application.add_subscriber(self.handle, self)
         # Subscribe to channel that's same as Player's handle
-        self.listen()
-
-    @tornado.gen.engine
-    def listen(self):
-        # Make a Redis connection
-        redis_pub = tornadoredis.Client(port=REDIS_SERVER_PORT)
-        redis_pub.connect()
-        yield tornado.gen.Task(self.redis_pub.subscribe, self.handle)
-        self.redis_pub.listen(self.on_channel_message)
+        # self.listen()
 
     def close(self, handle):
         self._send_message('dis-connect', text='Dis-connected from Game Server!')
@@ -79,10 +67,7 @@ class TicTacToeWSHandler(WebSocketHandler):
         # Disconnected from server
         # Send message to Paired user that opponent disconnected
         self.game.remove(self.handle)
-        ClientManager.remove(self.handle)
-        if self.redis_pub and self.redis_pub.subscribed:
-            self.redis_pub.unsubscribe(self.handle)
-            self.redis_pub.disconnect()
+        self.application.remove_subscriber(self.sprint, self)
 
 
 class AcitivityHandler(RequestHandler):
