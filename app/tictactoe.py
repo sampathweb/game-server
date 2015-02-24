@@ -1,5 +1,6 @@
 import json
 from db_conn import redis_db
+import opt
 
 
 class TicTacToe(object):
@@ -31,6 +32,7 @@ class TicTacToe(object):
 
     def init_player_data(self, status="new", pair=""):
         player_data = {}
+        player_data["hostname"] = opt.HOSTNAME
         player_data["status"] = status
         player_data["pair"] = pair
         player_data["my_moves"] = ""
@@ -96,7 +98,7 @@ class TicTacToe(object):
             player_data["my_moves"] = data["move"]
         redis_db.hset(player_key, "my_moves", player_data["my_moves"])
         player2_key = player_data["pair"]
-        player2_data = redis_db.hgetall(player_key)
+        player2_data = redis_db.hgetall(player2_key)
         data["next_handle"] = player_data["pair"]
         # Put the message on the channel of Player2
         redis_db.publish(player2_key, json.dumps(data))
