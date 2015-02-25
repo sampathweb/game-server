@@ -1,6 +1,5 @@
 import json
 from db_conn import redis_db
-import opt
 
 
 class TicTacToe(object):
@@ -30,9 +29,9 @@ class TicTacToe(object):
         player_key = "player:" + str(counter)
         return player_key
 
-    def init_player_data(self, status="new", pair=""):
+    def init_player_data(self, handle, status="new", pair=""):
         player_data = {}
-        player_data["hostname"] = opt.HOSTNAME
+        player_data["handle"] = handle
         player_data["status"] = status
         player_data["pair"] = pair
         player_data["my_moves"] = ""
@@ -40,24 +39,24 @@ class TicTacToe(object):
 
     def new_player(self):
         player_key = self.gen_key()
-        player_data = self.init_player_data("new")
+        player_data = self.init_player_data(player_key, "new")
         redis_db.hmset(player_key, player_data)
         return player_key
 
     def player_ready(self, player_key):
         # Find another player that"s ready to play
         paired_key = None
-        player_data = self.init_player_data(status="ready")
+        player_data = self.init_player_data(player_key, status="ready")
         redis_db.hmset(player_key, player_data)
 
         for player2_key in redis_db.keys("player:*"):
             if player2_key != player_key \
                     and redis_db.hget(player2_key, "status") == "ready":
                 # Pair the Players and send them messages
-                player_data = self.init_player_data("paired", player2_key)
+                player_data = self.init_player_data(player_key, "paired", player2_key)
                 redis_db.hmset(player_key, player_data)
 
-                player2_data = self.init_player_data("paired", player_key)
+                player2_data = self.init_player_data(player2_key, "paired", player_key)
                 redis_db.hmset(player2_key, player2_data)
 
                 # Send message to both players
@@ -65,7 +64,9 @@ class TicTacToe(object):
                 data["action"] = "game-start"
                 data["next_handle"] = player_key
                 # Send message to channel of both players
-                for channel_key in [player_key, player2_key]:
+                for channel_key, paired_key in [(player_key, player2_key),
+                        (player2_key, player_key)]:
+                    data["paired_handle"] = paired_key
                     redis_db.publish(channel_key, json.dumps(data))
                 redis_db.publish('pubsub-change', json.dumps(data))
                 paired_key = player2_key
@@ -141,8 +142,9 @@ class TicTacToe(object):
     def game_over(self, player_key):
         # Remove the player
         player2_key = redis_db.hget(player_key, "pair")
-        player_data = self.init_player_data("new")
+        player_data = self.init_player_data(player_key, "new")
         redis_db.hmset(player_key, player_data)
+        player_data = self.init_player_data(player2_key, "new")
         redis_db.hmset(player2_key, player_data)
 
     def remove(self, player_key):

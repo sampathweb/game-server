@@ -3,6 +3,7 @@ from tornado.escape import json_decode
 from tornado.websocket import WebSocketHandler
 from tornado.web import RequestHandler
 from tictactoe import TicTacToe
+import opt
 
 
 class IndexHandler(RequestHandler):
@@ -39,6 +40,7 @@ class TicTacToeWSHandler(WebSocketHandler):
         self.handle = self.game.new_player()
         self._send_message('connect',
             handle=self.handle,
+            hostname=opt.HOSTNAME,
             text='Connected to Game Server!')
         self.application.add_subscriber(self.handle, self)
         # Subscribe to channel that's same as Player's handle
@@ -73,7 +75,7 @@ class TicTacToeWSHandler(WebSocketHandler):
         # Disconnected from server
         # Send message to Paired user that opponent disconnected
         self.game.remove(self.handle)
-        self.application.remove_subscriber(self.sprint, self)
+        self.application.remove_subscriber(self.handle, self)
 
 
 class AcitivityHandler(RequestHandler):
