@@ -6,7 +6,6 @@ class TicTacToe(object):
 
     def __init__(self):
         self.winning_combos = []
-        self.game_result = None
         # Define the winning combinations by row
         for row in range(3):
             win_set = set()
@@ -59,19 +58,40 @@ class TicTacToe(object):
                 player2_data = self.init_player_data(player2_key, "paired", player_key)
                 redis_db.hmset(player2_key, player2_data)
 
+                # Send Paired to both players
+                data = {}
+                data["action"] = "paired"
+                data["pair"] = player2_key
+                redis_db.publish(player_key, json.dumps(data))
+                data = {}
+                data["action"] = "paired"
+                data["pair"] = player_key
+                redis_db.publish(player2_key, json.dumps(data))
+
                 # Send message to both players
                 data = {}
                 data["action"] = "game-start"
                 data["next_handle"] = player_key
+                data["valid-moves"] = self.open_positions()
                 # Send message to channel of both players
                 for channel_key, paired_key in [(player_key, player2_key),
                         (player2_key, player_key)]:
-                    data["paired_handle"] = paired_key
                     redis_db.publish(channel_key, json.dumps(data))
-                redis_db.publish('pubsub-change', json.dumps(data))
                 paired_key = player2_key
                 break
         return paired_key
+
+    def open_positions(self, moves_player_a="", moves_player_b=""):
+        """Returns List of Open positions"""
+        open_loc = set()
+        for row in range(3):
+            for col in range(3):
+                open_loc.add(str(row) + ',' + str(col))
+        moves_player_a = moves_player_a.split(";")
+        moves_player_b = moves_player_b.split(";")
+        open_loc = open_loc - set(moves_player_a)
+        open_loc = open_loc - set(moves_player_b)
+        return ';'.join(list(open_loc))
 
     def check_result(self, moves_player_a, moves_player_b):
         """Returns True if Game has ended with a Winner or Draw, else returns False"""
@@ -100,7 +120,6 @@ class TicTacToe(object):
         redis_db.hset(player_key, "my_moves", player_data["my_moves"])
         player2_key = player_data["pair"]
         player2_data = redis_db.hgetall(player2_key)
-        data["next_handle"] = player_data["pair"]
         # Put the message on the channel of Player2
         redis_db.publish(player2_key, json.dumps(data))
         # Check the game result
@@ -116,12 +135,18 @@ class TicTacToe(object):
             data = {}
             data["action"] = "game-end"
             data["next_handle"] = ""
+            data["result"] = result
             if result == "draw":
                 data["win_handle"] = ""
             elif result == "won":
                 data["win_handle"] = player_key
             elif result == "lost":
                 data["win_handle"] = player2_key
+        else:
+            data = {}
+            data["action"] = "valid-moves"
+            data["next_handle"] = player_data["pair"]
+            data["valid-moves"] = self.open_positions(moves_player_1, moves_player_2)
         for channel_key in [player_key, player2_key]:
             redis_db.publish(channel_key, json.dumps(data))
 

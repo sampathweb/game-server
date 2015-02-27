@@ -4,7 +4,7 @@ from tornado.web import Application
 import tornado.websocket
 from tornadoredis.pubsub import BaseSubscriber
 
-from handler import TicTacToeWSHandler, AcitivityHandler, IndexHandler
+from handler import TicTacToeWSHandler, AcitivityHandler, IndexHandler, RedisFlushHandler
 from db_conn import redis_db, redis_pubsub
 
 
@@ -29,6 +29,7 @@ class GameApplication(Application):
         routes = [
             (r'/', IndexHandler),
             (r'/tic-tac-toe/', TicTacToeWSHandler),
+            (r'/redis-flush/', RedisFlushHandler),
             (r'/activity/', AcitivityHandler)
         ]
         super(GameApplication, self).__init__(routes, \

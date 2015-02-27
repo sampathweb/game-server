@@ -4,12 +4,20 @@ from tornado.websocket import WebSocketHandler
 from tornado.web import RequestHandler
 from tictactoe import TicTacToe
 import opt
+from db_conn import redis_db
 
 
 class IndexHandler(RequestHandler):
 
     def get(self):
         self.render("index.html")
+
+
+class RedisFlushHandler(RequestHandler):
+
+    def get(self):
+        redis_db.flushall()
+        self.write('Redis Cache Flushed')
 
 
 class TicTacToeWSHandler(WebSocketHandler):
