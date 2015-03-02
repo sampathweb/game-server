@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import sys
 import json
 import asyncio
 from time import sleep
@@ -53,28 +54,16 @@ class GameClient:
         return send_data
 
 
-def open_websocket():
-    while True:
-        sleep(2)
-        try:
-            websocket = websockets.connect('ws://localhost:8001/tic-tac-toe/')
-            if websocket.open:
-                break
-        except Exception:
-            pass  # Keep trying
-    return websocket
-
-
 @asyncio.coroutine
-def main_websocket():
-    websocket = yield from websockets.connect('ws://localhost:8001/tic-tac-toe/')
+def main_websocket(ws_url):
+    websocket = yield from websockets.connect(ws_url)
     game_client = GameClient()
     while True:
         message = yield from websocket.recv()
         if message is None:
             # Connection closed, reconnect
             sleep(2)
-            websocket = yield from websockets.connect('ws://localhost:8001/tic-tac-toe/')
+            websocket = yield from websockets.connect(ws_url)
             game_client = GameClient()
         else:
             data = json.loads(message)
@@ -84,12 +73,17 @@ def main_websocket():
                 yield from websocket.send(json.dumps(send_data))
 
 
-def main(worker_numb):
-    asyncio.get_event_loop().run_until_complete(main_websocket())
+def main(worker_numb, ws_url):
+    asyncio.get_event_loop().run_until_complete(main_websocket(ws_url))
 
 if __name__ == '__main__':
+    if len(sys.argv) > 1 and sys.argv[1] == 'local':
+        ws_url = 'ws://localhost:8001/tic-tac-toe/'
+    else:
+        ws_url = "ws://websocket-ha-test.ovlizj.0001.usw1.cache.amazonaws.com"
+
     # Setup a list of processes that we want to run
-    processes = [Process(target=main, args=(x,)) for x in range(100)]
+    processes = [Process(target=main, args=(x, ws_url)) for x in range(100)]
 
     # Run processes
     for p in processes:
