@@ -129,6 +129,10 @@ class TicTacToe(object):
         moves_player_1 = player_data["my_moves"]
         moves_player_2 = player2_data["my_moves"]
         result = self.check_result(moves_player_1, moves_player_2)
+        if not result:
+            open_positions = self.open_positions(moves_player_1, moves_player_2)
+            if not open_positions:
+                result = "draw"
         if result:
             player_data["status"] = "game-end"
             player2_data["status"] = "game-end"
@@ -149,7 +153,7 @@ class TicTacToe(object):
             data = {}
             data["action"] = "valid-moves"
             data["next_handle"] = player_data["pair"]
-            data["valid-moves"] = self.open_positions(moves_player_1, moves_player_2)
+            data["valid-moves"] = open_positions
         for channel_key in [player_key, player2_key]:
             redis_db.publish(channel_key, json.dumps(data))
 

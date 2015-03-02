@@ -17,7 +17,7 @@ class GameClient:
 
     def handle_message(self, data):
         send_data = None
-        print('Messages: ', data)
+        # print('Messages: ', data)
         if data['action'] == 'connect':
             self.handle = data['handle']
             send_data = {}

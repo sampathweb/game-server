@@ -59,7 +59,7 @@ class TicTacToeWSHandler(WebSocketHandler):
         super(TicTacToeWSHandler, self).close()
 
     def on_channel_message(self, ch_msg):
-        print ch_msg
+        # print ch_msg
         if ch_msg.kind == 'subscribe':
             pass
         elif ch_msg.kind == 'message':
@@ -68,7 +68,7 @@ class TicTacToeWSHandler(WebSocketHandler):
 
     def on_message(self, message):
         data = json_decode(message)
-        print data
+        # print data
         if data['action'] == 'connect':
             pass
         elif data['action'] == 'ready':
