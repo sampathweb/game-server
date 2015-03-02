@@ -80,8 +80,9 @@ class TicTacToe(object):
                         (player2_key, player_key)]:
                     redis_db.publish(channel_key, json.dumps(data))
                 print 'Start Game Done : ', player_key, ' and ', player2_key
+                paired_key = player2_key
                 break
-        return player2_key
+        return paired_key
 
     def open_positions(self, moves_player_a="", moves_player_b=""):
         """Returns List of Open positions"""

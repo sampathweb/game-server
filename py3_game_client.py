@@ -16,16 +16,18 @@ class GameClient:
         self.my_move = False
 
     def handle_message(self, data):
-        print('Msg Recvd: ', data)
         send_data = None
+        print('Messages: ', data)
         if data['action'] == 'connect':
             self.handle = data['handle']
             send_data = {}
             send_data['action'] = 'ready'
             send_data['handle'] = self.handle
+            print('Client Connection: ', self.handle)
         elif data['action'] == 'paired':
             self.pair_handle = data['pair']
         elif data['action'] == 'game-start':
+            print('Game Started: ', self.handle, 'Vs. ', self.pair_handle)
             if data['next_handle'] == self.handle:
                 self.my_move = True
             else:
@@ -38,7 +40,7 @@ class GameClient:
         elif data['action'] == 'player-move':
             pass
         elif data['action'] == 'game-end':
-            print('My Handle: ', self.handle, 'Pair Handle: ', self.pair_handle, 'Result: ', data['result'], ' : ', data['win_handle'])
+            print('Game End: ', self.handle, 'Vs. ', self.pair_handle, 'Result: ', data['result'], ' : ', data['win_handle'])
             # Game Over
             self.my_move = False
             send_data = {}
@@ -80,13 +82,14 @@ if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == 'local':
         ws_url = 'ws://localhost:8001/tic-tac-toe/'
     else:
-        ws_url = "ws://websocket-ha-test.ovlizj.0001.usw1.cache.amazonaws.com"
+        ws_url = "ws://websockets-test-ha-1776378039.us-west-1.elb.amazonaws.com/tic-tac-toe/"
 
     # Setup a list of processes that we want to run
     processes = [Process(target=main, args=(x, ws_url)) for x in range(100)]
 
     # Run processes
     for p in processes:
+        sleep(0.5)
         p.start()
 
     # Exit the completed processes

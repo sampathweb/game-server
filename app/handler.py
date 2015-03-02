@@ -83,8 +83,8 @@ class TicTacToeWSHandler(WebSocketHandler):
     def on_close(self):
         # Disconnected from server
         # Send message to Paired user that opponent disconnected
-        self.game.remove(self.handle)
         self.application.remove_subscriber(self.handle, self)
+        self.game.remove(self.handle)
 
 
 class AcitivityHandler(RequestHandler):
