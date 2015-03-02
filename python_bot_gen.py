@@ -1,4 +1,4 @@
-import threading
+from multiprocessing import Process
 from time import sleep
 import json
 import random
@@ -9,7 +9,7 @@ HOST = "localhost:8001"
 WS_URL = 'ws://%s/tic-tac-toe/' % HOST
 
 
-def worker(worker_num):
+def worker(worker_num=1):
     # while True:
     #     try:
     # Connect to WS Server, Play the game until connection close
@@ -26,6 +26,7 @@ def worker(worker_num):
         # Send the ready to play
         # Continue Playing
         game_cnt = 0
+        sleep(2)
         while True:
             game_cnt += 1
             print 'Send the Start Game: '
@@ -35,10 +36,11 @@ def worker(worker_num):
             data['action'] = 'ready'
             data['handle'] = handle
             ws.send(json.dumps(data))
-            print 'Message Sent: ', handle
+            print 'Message Sent: ', data
             # Now, wait for game to start
             while True:
-                sleep(1)
+                sleep(2)
+                print 'Waiting for Server Message.'
                 message = ws.recv()
                 print message
                 data = json.loads(message)
@@ -55,7 +57,6 @@ def worker(worker_num):
             print 'game-started: ', handle, 'vs. ', pair_handle
             # Game Started
             while True:
-                sleep(1)
                 if my_move:
                     # select a piece to move
                     data = {}
@@ -81,12 +82,17 @@ def worker(worker_num):
         ws.close()
 
 
-def main():
-    for i in range(THREAD_COUNT):
-        t = threading.Thread(target=worker, args=[i])
-        t.start()
-    while True:
-        sleep(3)
+# def main():
+#         t = threading.Thread(target=worker, args=[i])
+#         t.start()
+#     while True:
+#         sleep(3)
 
 if __name__ == '__main__':
-        main()
+    players = []
+    for i in range(2):
+        p = Process(target=worker)
+        p.start()
+        players.append(p)
+    for p in players:
+        p.join()

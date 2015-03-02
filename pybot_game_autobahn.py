@@ -25,12 +25,14 @@
 ###############################################################################
 import json
 import random
+import sys
 from multiprocessing import Process
-from autobahn.asyncio.websocket import WebSocketClientProtocol, \
+# from autobahn.asyncio.websocket import WebSocketClientProtocol, \
+#     WebSocketClientFactory
+from autobahn.twisted.websocket import WebSocketClientProtocol, \
     WebSocketClientFactory
 
-
-import trollius
+# import trollius
 
 
 class MyClientProtocol(WebSocketClientProtocol):
@@ -45,20 +47,21 @@ class MyClientProtocol(WebSocketClientProtocol):
     def onConnect(self, response):
         print("Server connected: {0}".format(response.peer))
 
-    @trollius.coroutine
+    # @trollius.coroutine
     def onOpen(self):
         print("WebSocket connection open.")
         # start sending messages every second ..
 
     def onMessage(self, payload, isBinary):
         data = json.loads(payload)
+        print data
         if data['action'] == 'connect':
             self.handle = data['handle']
             data = {}
             data['action'] = 'ready'
             data['handle'] = self.handle
             self.sendMessage(json.dumps(data))
-            yield trollius.sleep(1)
+            # yield trollius.sleep(1)
         elif data['action'] == 'paired':
             self.pair_handle = data['pair']
         elif data['action'] == 'game-start':
@@ -81,35 +84,70 @@ class MyClientProtocol(WebSocketClientProtocol):
             data['action'] = 'ready'
             data['handle'] = self.handle
             self.sendMessage(json.dumps(data))
+            # yield trollius.sleep(1)
         if self.my_move:
             # select a piece to move
+            self.my_move = False
             data = {}
             data['action'] = 'player-move'
             data['handle'] = self.handle
             data['move'] = random.choice(self.open_positions.split(';'))
             self.sendMessage(json.dumps(data))
-            self.my_move = False
+            # yield trollius.sleep(1)
 
     def onClose(self, wasClean, code, reason):
         print("WebSocket connection closed: {0}".format(reason))
 
 
-def main():
-    factory = WebSocketClientFactory("ws://127.0.0.1:8001/tic-tac-toe/", debug=False)
+def main_async(worker_numb):
+    print sys.argv
+    if len(sys.argv) > 1 and sys.argv[1] == 'local':
+        ws_host = '127.0.0.1'
+        ws_port = 8001
+    else:
+        ws_host = "websocket-ha-test.ovlizj.0001.usw1.cache.amazonaws.com"
+        ws_port = 80
+    # + ':' + str(ws_port) +
+    ws_host_url = 'ws://' + ws_host + ':' + str(ws_port) + '/tic-tac-toe/'
+    factory = WebSocketClientFactory(ws_host_url, debug=False)
     factory.protocol = MyClientProtocol
 
     loop = trollius.get_event_loop()
-    coro = loop.create_connection(factory, '127.0.0.1', 8001)
+    coro = loop.create_connection(factory, ws_host, ws_port)
     loop.run_until_complete(coro)
     loop.run_forever()
     loop.close()
 
 
+def main(worker_numb):
+    from twisted.python import log
+    from twisted.internet import reactor
+
+    log.startLogging(sys.stdout)
+
+    print sys.argv
+    if len(sys.argv) > 1 and sys.argv[1] == 'local':
+        ws_host = '127.0.0.1'
+        ws_port = 8001
+    else:
+        ws_host = "websocket-ha-test.ovlizj.0001.usw1.cache.amazonaws.com"
+        ws_port = 80
+    # + ':' + str(ws_port) +
+    ws_host_url = 'ws://' + ws_host + ':' + str(ws_port) + '/tic-tac-toe/'
+    factory = WebSocketClientFactory(ws_host_url, debug=False)
+    factory.protocol = MyClientProtocol
+    reactor.connectTCP(ws_host, ws_port, factory)
+    reactor.run()
+
+
 if __name__ == '__main__':
-    players = []
-    for i in range(500):
-        p = Process(target=main)
+    # Setup a list of processes that we want to run
+    processes = [Process(target=main, args=(x,)) for x in range(4)]
+
+    # Run processes
+    for p in processes:
         p.start()
-        players.append(p)
-    for p in players:
+
+    # Exit the completed processes
+    for p in processes:
         p.join()

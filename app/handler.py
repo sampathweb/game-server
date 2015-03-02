@@ -46,11 +46,11 @@ class TicTacToeWSHandler(WebSocketHandler):
     def open(self):
         # Generate a Player's Handle
         self.handle = self.game.new_player()
+        self.application.add_subscriber(self.handle, self)
         self._send_message('connect',
             handle=self.handle,
             hostname=opt.HOSTNAME,
             text='Connected to Game Server!')
-        self.application.add_subscriber(self.handle, self)
         # Subscribe to channel that's same as Player's handle
         # self.listen()
 
@@ -59,6 +59,7 @@ class TicTacToeWSHandler(WebSocketHandler):
         super(TicTacToeWSHandler, self).close()
 
     def on_channel_message(self, ch_msg):
+        print ch_msg
         if ch_msg.kind == 'subscribe':
             pass
         elif ch_msg.kind == 'message':
