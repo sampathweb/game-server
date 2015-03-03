@@ -62,12 +62,7 @@ def main_websocket(ws_url):
     game_client = GameClient()
     while True:
         message = yield from websocket.recv()
-        if message is None:
-            # Connection closed, reconnect
-            sleep(2)
-            websocket = yield from websockets.connect(ws_url)
-            game_client = GameClient()
-        else:
+        if message is not None:
             data = json.loads(message)
             send_data = game_client.handle_message(data)
             if send_data:
@@ -85,7 +80,7 @@ if __name__ == '__main__':
         ws_url = "ws://websockets-test-ha-1776378039.us-west-1.elb.amazonaws.com/tic-tac-toe/"
 
     # Setup a list of processes that we want to run
-    processes = [Process(target=main, args=(x, ws_url)) for x in range(100)]
+    processes = [Process(target=main, args=(x, ws_url)) for x in range(20)]
 
     # Run processes
     for p in processes:

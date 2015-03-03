@@ -59,7 +59,7 @@ class TicTacToe(object):
                 redis_db.hmset(player2_key, player2_data)
 
                 # Send Paired to both players
-                print 'pair player: ', player_key, ' and ', player2_key
+                # print 'pair player: ', player_key, ' and ', player2_key
                 data = {}
                 data["action"] = "paired"
                 data["pair"] = player2_key
@@ -68,7 +68,7 @@ class TicTacToe(object):
                 data["action"] = "paired"
                 data["pair"] = player_key
                 redis_db.publish(player2_key, json.dumps(data))
-                print 'Start Game : ', player_key, ' and ', player2_key
+                # print 'Start Game : ', player_key, ' and ', player2_key
 
                 # Send message to both players
                 data = {}
@@ -79,7 +79,7 @@ class TicTacToe(object):
                 for channel_key, paired_key in [(player_key, player2_key),
                         (player2_key, player_key)]:
                     redis_db.publish(channel_key, json.dumps(data))
-                print 'Start Game Done : ', player_key, ' and ', player2_key
+                # print 'Start Game Done : ', player_key, ' and ', player2_key
                 paired_key = player2_key
                 break
         return paired_key
